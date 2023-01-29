@@ -1,4 +1,5 @@
-# binaryai.net
+# Load analysis result from binaryai.net,
+# BinaryAI is a binary file security analysis platform developed by Tencent Security Keen Lab.
 # Copyright 2021-2023 Tencent. All Rights Reserved.
 
 #@author Tencent Security KeenLab
@@ -205,7 +206,7 @@ class GhidraScript:
         monitor.initialize(total)
         for addr, func in self.functions.iteritems():
             monitor.checkCanceled()
-            print("===== {:#x} {} {}".format(addr, func['function_name'], func['score']))
+            # print("===== {:#x} {} {}".format(addr, func['function_name'], func['score']))
             createBookmark(toAddr(addr), "BinaryAI", "{}".format(func['function_name']))
             monitor.incrementProgress(1)
             monitor.setMessage("Working on {}/{}".format(idx, total))
@@ -341,7 +342,16 @@ class Viewer(object):
             idaapi.set_dock_pos(self.title, title, idaapi.DP_RIGHT)
 
     def __init__(self):
-        self.code_view = None  # type: Viewer.SourceCodeViewerUI
+        self.code_view = None # Viewer.SourceCodeViewerUI
+        self.info_view = None # Viewer.InfoViewerUI
+        self.visible = False
+
+    def reset(self):
+        if self.code_view is not None:
+            ida_kernwin.close_widget(self.code_view.GetWidget(), 0)
+        if self.info_view is not None:
+            ida_kernwin.close_widget(self.info_view.GetWidget(), 0)
+        self.code_view = None
         self.info_view = None
         self.visible = False
 
@@ -350,8 +360,8 @@ class Viewer(object):
 
     def update(self, func):
         if func is None:
-            code = "Not Found."
-            info = ""
+            self.reset()
+            return
         else:
             code = func['code']
             url = Utils.get_source_location_with_line(func['entry_url'], func['slot_name'], func['filepath'],
@@ -363,8 +373,8 @@ class Viewer(object):
             info += "Source file path: {}\n".format(idaapi.COLSTR(url, idaapi.SCOLOR_LIBNAME))
         first_time = False
         if not self.is_visible():
-            self.code_view = Viewer.SourceCodeViewerUI("Matched Source")
-            self.info_view = Viewer.InfoViewerUI("Function metadata")
+            self.code_view = Viewer.SourceCodeViewerUI("BinaryAI Matched Source")
+            self.info_view = Viewer.InfoViewerUI("BinaryAI Function metadata")
             first_time = True
         widget = idaapi.get_current_widget()
         self.code_view.update(code)
@@ -392,7 +402,7 @@ class UIHooks(idaapi.UI_Hooks):
             attrs.color = self.HIGHLIGHT_COLOR
 
     def screen_ea_changed(self, ea, prev_ea):
-        if not self.plugin.viewer:
+        if self.plugin.viewer is None:
             return
         func = idaapi.get_func(ea)
         if func and func.start_ea in self.plugin.function_dict:
@@ -411,14 +421,9 @@ class IDAPlugin(idaapi.plugin_t):
     # flags = idaapi.PLUGIN_UNL
     flags = idaapi.PLUGIN_KEEP
 
-    def __init__(self):
-        self.code_view = None  # type: Viewer.SourceCodeViewerUI
-        self.info_view = None
-        self.visible = False
-
     def init(self):
         print("#" * 60)
-        print("binaryai.cn/binaryai.net")
+        print("https://github.com/binaryai/plugins")
         print("BinaryAI plugin shortcut key is Ctrl-Shift-B")
         self.viewer = None
         self.function_dict = None
@@ -446,7 +451,6 @@ class IDAPlugin(idaapi.plugin_t):
             return False
 
         sha256 = ida_nalt.retrieve_input_file_sha256().hex()
-        print(sha256)
         if 'file_sha256' not in data or data['file_sha256'] != sha256:
             ida_kernwin.warning("json file does not match the binary.")
             return False
@@ -460,40 +464,10 @@ class IDAPlugin(idaapi.plugin_t):
     def run(self, arg):
         if not self.load_json():
             return
-        if self.viewer:
-            del self.viewer
-        self.viewer = Viewer()
-
-
-    def is_visible(self):
-        return self.code_view and self.code_view.GetWidget()
-
-    def update(self, func):
-        if func is None:
-            code = "Not Found."
-            info = ""
+        if self.viewer is None:
+            self.viewer = Viewer()
         else:
-            code = func['code']
-            url = Utils.get_source_location_with_line(func['entry_url'], func['slot_name'], func['filepath'],
-                                                      func['line_number'])
-            info = "Function Name:    {}\n".format(idaapi.COLSTR(func['function_name'], idaapi.SCOLOR_LIBNAME))
-            info += "Score:            {}\n".format(idaapi.COLSTR(str(func['score']), idaapi.SCOLOR_LIBNAME))
-            info += "Git URL:          {}\n".format(idaapi.COLSTR(func['entry_url'], idaapi.SCOLOR_LIBNAME))
-            info += "Version:          {}\n".format(idaapi.COLSTR(func['slot_name'], idaapi.SCOLOR_LIBNAME))
-            info += "Source file path: {}\n".format(idaapi.COLSTR(url, idaapi.SCOLOR_LIBNAME))
-        first_time = False
-        if not self.is_visible():
-            self.code_view = Viewer.SourceCodeViewerUI("Matched Source")
-            self.info_view = Viewer.InfoViewerUI("Function metadata")
-            first_time = True
-        widget = idaapi.get_current_widget()
-        self.code_view.update(code)
-        self.info_view.update(info)
-        if first_time:
-            self.code_view.Show()
-            self.info_view.Show()
-            self.code_view.dock(widget)
-            self.info_view.dock()
+            self.viewer.reset()
 
 
 def PLUGIN_ENTRY():
