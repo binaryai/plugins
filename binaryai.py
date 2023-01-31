@@ -124,7 +124,7 @@ class GhidraScript:
         self.codePane = JTextPane()
         self.scrollPane.setViewportView(self.codePane)
         self.infoPane = JTextPane()
-        self.infoPane.setPreferredSize(Dimension(600, 110))
+        self.infoPane.setPreferredSize(Dimension(600, 120))
         self.infoPane.setMargin(Insets(0, 10, 10, 10))
         self.infoPane.setText("Click on function to see result.")
         self.panel.add(self.infoPane, BorderLayout.NORTH)
@@ -393,13 +393,20 @@ class UIHooks(idaapi.UI_Hooks):
     def __init__(self, plugin):
         ida_kernwin.UI_Hooks.__init__(self)
         self.plugin = plugin
-        self.is_function_window_hooked = idaapi.enable_chooser_item_attrs("Functions window", True)
+        self.is_function_window_hooked = False
         self.current_f = None
 
     def get_chooser_item_attrs(self, chooser, n, attrs):
         func = idaapi.getn_func(n)
         if self.plugin.function_dict and func.start_ea in self.plugin.function_dict:
             attrs.color = self.HIGHLIGHT_COLOR
+
+    def updating_actions(self, ctx):
+        title = "Function window"
+        if idaapi.find_widget("Functions"): # >= version 7.7
+            title = "Functions"
+        if not self.is_function_window_hooked:
+            self.is_function_window_hooked = idaapi.enable_chooser_item_attrs(title, True)
 
     def screen_ea_changed(self, ea, prev_ea):
         if self.plugin.viewer is None:
@@ -440,6 +447,8 @@ class IDAPlugin(idaapi.plugin_t):
 
     def load_json(self):
         fp = ida_kernwin.ask_file(False, "*.json", "file download from binaryai.net")
+        if not fp:
+            return False
         if not os.path.exists(fp):
             ida_kernwin.warning("file does not exists.")
             return False
@@ -468,6 +477,7 @@ class IDAPlugin(idaapi.plugin_t):
             self.viewer = Viewer()
         else:
             self.viewer.reset()
+        self.ui_hooks.is_function_window_hooked = False
 
 
 def PLUGIN_ENTRY():

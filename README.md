@@ -13,6 +13,7 @@ Or try with binaries and results in `samples`.
 
 ## Load result with IDA Pro
 1. Download `binaryai.py` and put it in `$IDA_INSTALL_DIR/plugins`
+2. Install dependency: `pip install pygments`
 2. Open your binary in IDA Pro
 3. Invoke the plugin with `Ctrl-Shift-B` or `Edit -> Plugins -> BinaryAI`
 4. Select the result json file downloaded from [binaryai.net](https://www.binaryai.net) in the file dialog
