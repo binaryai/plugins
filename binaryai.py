@@ -402,7 +402,7 @@ class UIHooks(idaapi.UI_Hooks):
             attrs.color = self.HIGHLIGHT_COLOR
 
     def updating_actions(self, ctx):
-        title = "Function window"
+        title = "Functions window"
         if idaapi.find_widget("Functions"): # >= version 7.7
             title = "Functions"
         if not self.is_function_window_hooked:
