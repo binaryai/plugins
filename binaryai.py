@@ -395,7 +395,7 @@ class UIHooks(idaapi.UI_Hooks):
         ida_kernwin.UI_Hooks.__init__(self)
         self.plugin = plugin
         self.is_function_window_hooked = False
-        self.current_f = None
+        self.current_func = None
 
     def get_chooser_item_attrs(self, chooser, n, attrs):
         func = idaapi.getn_func(n)
@@ -413,13 +413,12 @@ class UIHooks(idaapi.UI_Hooks):
         if self.plugin.viewer is None:
             return
         func = idaapi.get_func(ea)
+        f = None
         if func and func.start_ea in self.plugin.function_dict:
             f = self.plugin.function_dict[func.start_ea]
-        else:
-            f = None
-        if self.current_f != f:
+        if self.current_func != func and f:
             self.plugin.viewer.update(f)
-            self.current_f = f
+            self.current_func = func
 
 class IDAPlugin(idaapi.plugin_t):
     comment = "BinaryAI plugin for IDA Pro"
