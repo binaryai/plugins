@@ -9,6 +9,7 @@ import platform
 import os
 import json
 import re
+import io
 
 ENV = None
 if platform.python_implementation() == "Jython":
@@ -142,7 +143,7 @@ class GhidraScript:
         if not os.path.exists(fp):
             Msg.showError(self, None, IMPORT_ERROR_TITLE, "{} does not exists.".format(fp))
             return False
-        with open(fp, "r") as f:
+        with io.open(fp, "r", encoding="utf-8") as f:
             data = json.load(f)
         sha256 = currentProgram.getExecutableSHA256()
         if 'file_sha256' not in data or data['file_sha256'] != sha256:
@@ -452,7 +453,7 @@ class IDAPlugin(idaapi.plugin_t):
         if not os.path.exists(fp):
             ida_kernwin.warning("file does not exists.")
             return False
-        with open(fp, "r") as f:
+        with io.open(fp, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         if 'base_addr' not in data or 'functions' not in data:
