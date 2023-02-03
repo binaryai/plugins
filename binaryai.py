@@ -5,6 +5,7 @@
 #@author Tencent Security KeenLab
 #@category Binary
 
+from __future__ import unicode_literals
 import platform
 import os
 import json
