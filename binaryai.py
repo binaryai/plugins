@@ -404,22 +404,25 @@ class UIHooks(idaapi.UI_Hooks):
             attrs.color = self.HIGHLIGHT_COLOR
 
     def updating_actions(self, ctx):
-        title = "Functions window"
+        title = None
         if idaapi.find_widget("Functions"): # >= version 7.7
             title = "Functions"
-        if not self.is_function_window_hooked:
+        elif idaapi.find_widget("Functions window"):
+            title = "Functions window"
+        if not self.is_function_window_hooked and title:
             self.is_function_window_hooked = idaapi.enable_chooser_item_attrs(title, True)
 
     def screen_ea_changed(self, ea, prev_ea):
         if self.plugin.viewer is None:
             return
         func = idaapi.get_func(ea)
-        f = None
         if func and func.start_ea in self.plugin.function_dict:
-            f = self.plugin.function_dict[func.start_ea]
-        if self.current_func != func and f:
-            self.plugin.viewer.update(f)
-            self.current_func = func
+            if self.current_func != func:
+                f = self.plugin.function_dict[func.start_ea]
+                self.plugin.viewer.update(f)
+                self.current_func = func
+        else:
+            self.plugin.viewer.reset()
 
 class IDAPlugin(idaapi.plugin_t):
     comment = "BinaryAI plugin for IDA Pro"
