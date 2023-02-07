@@ -2,6 +2,7 @@
 
 Upload your binary to [binaryai.net](https://www.binaryai.net) and wait for the analysis finishes, then you can download the result json file with `BinaryAI similarity` button.
 Or try with binaries and results in `samples`.
+![readme](./imgs/readme.png)
 
 ## Load result with Ghidra
 1. Download `binaryai.py` and put it in `$USER_HOME/ghidra_scripts`
