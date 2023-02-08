@@ -483,6 +483,21 @@ class IDAPlugin(idaapi.plugin_t):
             self.viewer.reset()
         self.ui_hooks.is_function_window_hooked = False
 
+        # Rename functions in IDB
+        _rename_choice = ida_kernwin.ask_buttons(
+            "Yes", "No", "Cancel", 2, "Do you want to rename all matching functions in the IDB?")
+        if _rename_choice == 1:
+            _function_set = {}
+            for _addr, _func in self.function_dict.items():
+                #print(hex(_addr), _func["function_name"])
+                _func_name = _func["function_name"]
+                _func_name = _func_name if _function_set.get(
+                    _func_name) is None else _func_name + "_" + str(_function_set.get(_func_name))
+                idaapi.set_name(_addr, _func_name)
+                _function_set[_func_name] = 0 if _function_set.get(
+                    _func_name) is None else _function_set[_func_name] + 1
+            del _function_set
+
 
 def PLUGIN_ENTRY():
     if not Utils.is_ida_version_supported():
