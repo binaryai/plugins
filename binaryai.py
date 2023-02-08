@@ -485,7 +485,7 @@ class IDAPlugin(idaapi.plugin_t):
 
         # Rename functions in IDB
         _rename_choice = ida_kernwin.ask_buttons(
-            "Yes", "No", "Cancel", 2, "Do you want to rename all matching functions in the IDB?")
+            "Yes", "No", "Cancel", 2, "Do you want to rename all matched functions in the IDB?")
         if _rename_choice == 1:
             _function_set = {}
             for _addr, _func in self.function_dict.items():
